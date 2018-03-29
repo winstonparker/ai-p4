@@ -102,6 +102,7 @@ def constructBayesNet(gameState):
 
             #add obsVars
             obsVars.append(obsVar)
+            variableDomainsDict[obsVar] = OBS_VALS
 
             # add House Pos Edges
             edges.append((FOOD_HOUSE_VAR, obsVar))
@@ -117,7 +118,7 @@ def constructBayesNet(gameState):
     variableDomainsDict[X_POS_VAR] = X_POS_VALS
     variableDomainsDict[Y_POS_VAR] = Y_POS_VALS
     variableDomainsDict[FOOD_HOUSE_VAR] = HOUSE_VARS
-    variableDomainsDict[GHOST_HOUSE_VAR] = OBS_VALS
+    variableDomainsDict[GHOST_HOUSE_VAR] = HOUSE_VARS
 
     variables = [X_POS_VAR, Y_POS_VAR] + HOUSE_VARS + obsVars
     net = bn.constructEmptyBayesNet(variables, edges, variableDomainsDict)
@@ -199,7 +200,7 @@ def fillObsCPT(bayesNet, gameState):
     description for what this probability table looks like. You can use
     PROB_FOOD_RED and PROB_GHOST_RED from the top of the file.
 
-    You will need to create a new factor for *each* of 4*7 = 28 observation
+    You will need to create a new factor for *each,* of 4*7 = 28 observation
     variables. Don't forget to call bayesNet.setCPT for each factor you create.
 
     The XXXPos variables at the beginning of this method contain the (x, y)
@@ -215,9 +216,25 @@ def fillObsCPT(bayesNet, gameState):
     """
 
     bottomLeftPos, topLeftPos, bottomRightPos, topRightPos = gameState.getPossibleHouses()
+    obs = []
+    from layout import PROB_BOTH_TOP, PROB_BOTH_BOTTOM, PROB_LEFT_TOP
 
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+
+
+    #get all obs vars
+    for var in bayesNet.variablesSet():
+        if "obs" not in var:
+            continue
+        obs.append(var)
+
+        obFactor = bn.Factor([var], [], bayesNet.variableDomainsDict())
+        obFactor.setProbability({var: BLUE_OBS_VAL}, 1 - PROB_GHOST_RED)
+        obFactor.setProbability({var: RED_OBS_VAL}, PROB_GHOST_RED)
+        obFactor.setProbability({var: NO_OBS_VAL}, 1)
+
+        bayesNet.setCPT(var, obFactor)
+
+    # bayesNet.setCPT()
 
 def getMostLikelyFoodHousePosition(evidence, bayesNet, eliminationOrder):
     """
