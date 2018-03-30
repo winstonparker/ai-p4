@@ -147,13 +147,13 @@ def fillYCPT(bayesNet, gameState):
     You can use the PROB_* constants imported from layout rather than writing
     probabilities down by hand.
     """
-    from layout import PROB_BOTH_TOP, PROB_BOTH_BOTTOM, PROB_LEFT_TOP
+    from layout import PROB_BOTH_TOP, PROB_BOTH_BOTTOM, PROB_ONLY_LEFT_BOTTOM, PROB_ONLY_LEFT_TOP
 
     yFactor = bn.Factor([Y_POS_VAR], [], bayesNet.variableDomainsDict())
     yFactor.setProbability({Y_POS_VAR: BOTH_TOP_VAL}, PROB_BOTH_TOP)
     yFactor.setProbability({Y_POS_VAR: BOTH_BOTTOM_VAL}, PROB_BOTH_BOTTOM)
-    yFactor.setProbability({Y_POS_VAR: LEFT_TOP_VAL}, PROB_LEFT_TOP)
-    yFactor.setProbability({Y_POS_VAR: LEFT_BOTTOM_VAL}, 1 - PROB_LEFT_TOP)
+    yFactor.setProbability({Y_POS_VAR: LEFT_TOP_VAL}, PROB_ONLY_LEFT_TOP)
+    yFactor.setProbability({Y_POS_VAR: LEFT_BOTTOM_VAL}, PROB_ONLY_LEFT_BOTTOM)
 
     bayesNet.setCPT(Y_POS_VAR, yFactor)
 
@@ -245,14 +245,16 @@ def fillObsCPT(bayesNet, gameState):
         obFactor = bn.Factor([var], [GHOST_HOUSE_VAR,FOOD_HOUSE_VAR ], bayesNet.variableDomainsDict())
 
 
-
         for house in houses:
             for house2 in houses:
                 house3 = houses.index(house)
                 house4 = houses.index(house2)
+                x1, y1 = house
+                x2, y2 = house2
 
-                if adjacent(pos, house, gameState.getHouseWalls(house)) and adjacent(pos, house,
-                                                                                     gameState.getHouseWalls(house2)):
+
+                if adjacent(pos, house, gameState.getHouseWalls(house)) and adjacent(pos, house2,
+                                                                                  gameState.getHouseWalls(house2)):
                     obFactor.setProbability(
                         {var: RED_OBS_VAL, GHOST_HOUSE_VAR: HOUSE_VALS[house3], FOOD_HOUSE_VAR: HOUSE_VALS[house4]},
                         PROB_FOOD_RED)
@@ -261,13 +263,26 @@ def fillObsCPT(bayesNet, gameState):
                         1 - PROB_FOOD_RED)
 
 
-                elif adjacent(pos, house, gameState.getHouseWalls(house)) or adjacent(pos, house, gameState.getHouseWalls(house2)):
-
-                    obFactor.setProbability( {var: RED_OBS_VAL, GHOST_HOUSE_VAR: HOUSE_VALS[house3], FOOD_HOUSE_VAR: HOUSE_VALS[house4]},
+                elif adjacent(pos, house, gameState.getHouseWalls(house)):
+                    obFactor.setProbability(
+                        {var: RED_OBS_VAL, GHOST_HOUSE_VAR: HOUSE_VALS[house3], FOOD_HOUSE_VAR: HOUSE_VALS[house4]},
                         PROB_GHOST_RED)
                     obFactor.setProbability(
-                        {var: BLUE_OBS_VAL, GHOST_HOUSE_VAR: HOUSE_VALS[house3], FOOD_HOUSE_VAR: HOUSE_VALS[house4]},
+                        {var: BLUE_OBS_VAL, GHOST_HOUSE_VAR: HOUSE_VALS[house3],
+                         FOOD_HOUSE_VAR: HOUSE_VALS[house4]},
                         1 - PROB_GHOST_RED)
+
+
+                elif adjacent(pos, house2, gameState.getHouseWalls(house2)):
+
+                    obFactor.setProbability(
+                        {var: RED_OBS_VAL, GHOST_HOUSE_VAR: HOUSE_VALS[house3], FOOD_HOUSE_VAR: HOUSE_VALS[house4]},
+                        PROB_FOOD_RED)
+                    obFactor.setProbability(
+                        {var: BLUE_OBS_VAL, GHOST_HOUSE_VAR: HOUSE_VALS[house3],
+                         FOOD_HOUSE_VAR: HOUSE_VALS[house4]},
+                        1 - PROB_FOOD_RED)
+
 
                 else:
                     obFactor.setProbability(
@@ -284,6 +299,7 @@ def fillObsCPT(bayesNet, gameState):
         bayesNet.setCPT(var, obFactor)
 
 def adjacent(obs, house, walls):
+
     x, y = obs
 
     if (x , y) == house or (x , y) in walls:
@@ -301,6 +317,7 @@ def adjacent(obs, house, walls):
 
 
     return False
+
 
 
 
