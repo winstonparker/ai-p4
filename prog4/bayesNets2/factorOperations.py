@@ -15,6 +15,7 @@
 from bayesNet import Factor
 import operator as op
 import util
+import copy
 
 def joinFactorsByVariableWithCallTracking(callTrackingList=None):
 
@@ -149,9 +150,48 @@ def eliminateWithCallTracking(callTrackingList=None):
                     "eliminationVariable:" + str(eliminationVariable) + "\n" +\
                     "unconditionedVariables: " + str(factor.unconditionedVariables()))
 
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        #dont remove from above
 
+        #get data from old factor and make a new one
+        temp2 = list(factor.unconditionedVariables())
+        temp2.remove(eliminationVariable)
+        finalremaining = list(temp2)
+        newFactor = Factor(finalremaining, factor.conditionedVariables(),  factor.variableDomainsDict() )
+        newList = list(factor.getAllPossibleAssignmentDicts())
+
+        #remove dups from vars
+        noDupes = []
+
+        #remove elem var
+        for diction in newList:
+            diction.pop(eliminationVariable, None)
+
+        for diction in newList:
+            if diction not in noDupes:
+                noDupes.append(diction)
+
+        newList = noDupes
+
+        #get all possible vals of emlim var and remove dups
+        elimVals = [dict2[eliminationVariable] for dict2 in factor.getAllPossibleAssignmentDicts()]
+        noDupes2 = []
+        for val in elimVals:
+            if val not in noDupes2:
+                noDupes2.append(val)
+
+        elimVals = noDupes2
+
+
+        #for each new (lacking the elem var) dictionary , check the prob with a possible elem val and add them together
+        for diction in newList:
+            prob = 0
+            for elimVal in elimVals:
+                 temp = copy.deepcopy(diction)
+                 temp[eliminationVariable] = elimVal
+                 prob += factor.getProbability(temp)
+            newFactor.setProbability(diction, prob)
+
+        return newFactor
     return eliminate
 
 eliminate = eliminateWithCallTracking()
