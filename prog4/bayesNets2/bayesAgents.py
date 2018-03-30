@@ -282,7 +282,7 @@ def fillObsCPT(bayesNet, gameState):
 
 
         bayesNet.setCPT(var, obFactor)
-        
+
 def adjacent(obs, house, walls):
     x, y = obs
 
