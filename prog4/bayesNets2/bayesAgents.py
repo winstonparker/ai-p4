@@ -22,6 +22,7 @@ import itertools
 import operator as op
 import random
 import util
+from ast import literal_eval as make_tuple
 
 from hunters import GHOST_COLLISION_REWARD, WON_GAME_REWARD
 from layout import PROB_BOTH_TOP, PROB_BOTH_BOTTOM, PROB_ONLY_LEFT_TOP, \
@@ -117,8 +118,8 @@ def constructBayesNet(gameState):
     #add variableDomains
     variableDomainsDict[X_POS_VAR] = X_POS_VALS
     variableDomainsDict[Y_POS_VAR] = Y_POS_VALS
-    variableDomainsDict[FOOD_HOUSE_VAR] = HOUSE_VARS
-    variableDomainsDict[GHOST_HOUSE_VAR] = HOUSE_VARS
+    variableDomainsDict[FOOD_HOUSE_VAR] = HOUSE_VALS
+    variableDomainsDict[GHOST_HOUSE_VAR] = HOUSE_VALS
 
     variables = [X_POS_VAR, Y_POS_VAR] + HOUSE_VARS + obsVars
     net = bn.constructEmptyBayesNet(variables, edges, variableDomainsDict)
@@ -216,25 +217,92 @@ def fillObsCPT(bayesNet, gameState):
     """
 
     bottomLeftPos, topLeftPos, bottomRightPos, topRightPos = gameState.getPossibleHouses()
+    houses = [topLeftPos, topRightPos, bottomLeftPos, bottomRightPos]
+    houseWalls = []
+
+    for house in houses:
+        for wall in gameState.getHouseWalls(house):
+            houseWalls.append(wall)
+
+
     obs = []
     from layout import PROB_BOTH_TOP, PROB_BOTH_BOTTOM, PROB_LEFT_TOP
-
-
+    cords = []
 
     #get all obs vars
     for var in bayesNet.variablesSet():
         if "obs" not in var:
             continue
         obs.append(var)
+        var = var[3:]
+        cords.append(var)
 
-        obFactor = bn.Factor([var], [], bayesNet.variableDomainsDict())
-        obFactor.setProbability({var: BLUE_OBS_VAL}, 1 - PROB_GHOST_RED)
-        obFactor.setProbability({var: RED_OBS_VAL}, PROB_GHOST_RED)
-        obFactor.setProbability({var: NO_OBS_VAL}, 1)
+
+    for i, pos in enumerate(cords):
+        var = obs[i]
+        pos = make_tuple(pos)
+        x, y = pos
+        obFactor = bn.Factor([var], [GHOST_HOUSE_VAR,FOOD_HOUSE_VAR ], bayesNet.variableDomainsDict())
+
+
+
+        for house in houses:
+            for house2 in houses:
+                house3 = houses.index(house)
+                house4 = houses.index(house2)
+
+                if adjacent(pos, house, gameState.getHouseWalls(house)) and adjacent(pos, house,
+                                                                                     gameState.getHouseWalls(house2)):
+                    obFactor.setProbability(
+                        {var: RED_OBS_VAL, GHOST_HOUSE_VAR: HOUSE_VALS[house3], FOOD_HOUSE_VAR: HOUSE_VALS[house4]},
+                        PROB_FOOD_RED)
+                    obFactor.setProbability(
+                        {var: BLUE_OBS_VAL, GHOST_HOUSE_VAR: HOUSE_VALS[house3], FOOD_HOUSE_VAR: HOUSE_VALS[house4]},
+                        1 - PROB_FOOD_RED)
+
+
+                elif adjacent(pos, house, gameState.getHouseWalls(house)) or adjacent(pos, house, gameState.getHouseWalls(house2)):
+
+                    obFactor.setProbability( {var: RED_OBS_VAL, GHOST_HOUSE_VAR: HOUSE_VALS[house3], FOOD_HOUSE_VAR: HOUSE_VALS[house4]},
+                        PROB_GHOST_RED)
+                    obFactor.setProbability(
+                        {var: BLUE_OBS_VAL, GHOST_HOUSE_VAR: HOUSE_VALS[house3], FOOD_HOUSE_VAR: HOUSE_VALS[house4]},
+                        1 - PROB_GHOST_RED)
+
+                else:
+                    obFactor.setProbability(
+                        {var: NO_OBS_VAL, GHOST_HOUSE_VAR: HOUSE_VALS[house3], FOOD_HOUSE_VAR: HOUSE_VALS[house4]},
+                        1)
+                    obFactor.setProbability(
+                        {var: NO_OBS_VAL, GHOST_HOUSE_VAR: HOUSE_VALS[house3], FOOD_HOUSE_VAR: HOUSE_VALS[house4]},
+                        1 )
+
+
+
+
 
         bayesNet.setCPT(var, obFactor)
+        
+def adjacent(obs, house, walls):
+    x, y = obs
 
-    # bayesNet.setCPT()
+    if (x , y) == house or (x , y) in walls:
+        return True
+    if (x + 1, y) == house or (x + 1, y) in walls:
+        return True
+    elif (x - 1, y) == house or (x - 1, y) in walls:
+        return True
+    elif (x, y + 1) == house or (x , y + 1) in walls:
+        return True
+    elif (x, y - 1) == house or (x , y - 1) in walls:
+        return True
+
+
+
+
+    return False
+
+
 
 def getMostLikelyFoodHousePosition(evidence, bayesNet, eliminationOrder):
     """

@@ -226,6 +226,7 @@ class BayesNet(object):
 class Factor(object):
 
     def __init__(self, inputUnconditionedVariables, inputConditionedVariables, inputVariableDomainsDict):
+        # type: (object, object, object) -> object
         """
         Constructor for factors.
 
@@ -371,16 +372,20 @@ class Factor(object):
 
         Returns None
         """
-        if probability < 0: 
+        if probability < 0:
             raise ValueError, ("Probabilty entries can't be set to negative values: " + \
                                str(probability))
         else:
 
             assignmentsInOrder = self.__getAssignmentsInOrder(assignmentDict)
+
+
             if assignmentsInOrder not in self.__probDict:
+
                 raise ValueError, ("The input assignmentDict is not contained in this factor: \n" \
                                   +  str(self) + str(assignmentDict))
             else:
+
                 self.__probDict[assignmentsInOrder] = probability
 
     def __getAssignmentsInOrder(self, assignmentDict):
