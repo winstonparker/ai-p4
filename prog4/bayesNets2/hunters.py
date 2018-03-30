@@ -163,6 +163,7 @@ class GameState:
         return self.data.observedPositions
 
     def getHouseWalls(self, house):
+        # type: (object) -> object
         return layout.buildHouseAroundCenter(*house)
 
     def getPossibleHouses(self):
