@@ -247,8 +247,6 @@ def normalize(factor):
     "*** YOUR CODE HERE ***"
 
     # get data from old factor and make a new one
-
-    
     conditional = list(factor.conditionedVariables())
     unconditional = []
 
