@@ -225,7 +225,8 @@ class ExactInference(InferenceModule):
         positions after a time update from a particular position.
         """
 
-=        dist = []
+        "*** YOUR CODE HERE ***"
+        dist = []
         newBeleif = util.Counter()
         final = util.Counter()
         poss = list(self.legalPositions)
