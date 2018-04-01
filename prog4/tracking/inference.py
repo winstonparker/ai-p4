@@ -225,8 +225,7 @@ class ExactInference(InferenceModule):
         positions after a time update from a particular position.
         """
 
-        "*** YOUR CODE HERE ***"
-        dist = []
+=        dist = []
         newBeleif = util.Counter()
         final = util.Counter()
         poss = list(self.legalPositions)
@@ -275,12 +274,12 @@ class ParticleFilter(InferenceModule):
         """
         "*** YOUR CODE HERE ***"
 
-        self.particles = []
-        numParticles = self.numParticles
-
-        for num in range(0, numParticles):
-            for position in self.legalPositions:
-            self.particles.append(position)
+        # self.particles = []
+        # numParticles = self.numParticles
+        #
+        # for num in range(0, numParticles):
+        #     for position in self.legalPositions:
+        #     self.particles.append(position)
 
     def observe(self, observation, gameState):
         """
