@@ -275,12 +275,15 @@ class ParticleFilter(InferenceModule):
         """
         "*** YOUR CODE HERE ***"
 
-        # self.particles = []
-        # numParticles = self.numParticles
-        #
-        # for num in range(0, numParticles):
-        #     for position in self.legalPositions:
-        #     self.particles.append(position)
+        self.particles = []
+        numParticles = self.numParticles
+        pCounter = 0
+
+        #append particles to legal positions until we run out of particles
+        while pCounter < numParticles:
+            for position in self.legalPositions:
+                self.particles.append(position)
+                pCounter += 1
 
     def observe(self, observation, gameState):
         """
@@ -313,7 +316,27 @@ class ParticleFilter(InferenceModule):
         emissionModel = busters.getObservationDistribution(noisyDistance)
         pacmanPosition = gameState.getPacmanPosition()
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+
+        newBeliefs = util.Counter()
+        beliefs = self.getBeliefDistribution()
+
+        for pos in self.legalPositions:
+            trueDistance = util.manhattanDistance(pacmanPosition, pos)
+            if emissionModel[trueDistance] > 0:
+                newBeliefs[pos] = emissionModel[trueDistance] * beliefs[pos]
+        newBeliefs.normalize()
+
+        if newBeliefs.totalCount() == 0:
+            self.initializeUniformly(gameState, self.numParticles)
+        else:
+            self.particles = []
+            for i in range (0, self.numParticles):
+                self.particles.append(util.sampleFromCounter(newBeliefs))
+
+        if noisyDistance == 999:
+            self.particles = []
+            for i in range (0, self.numParticles):
+                self.particles.append(self.getJailPosition())
 
     def elapseTime(self, gameState):
         """
@@ -340,7 +363,15 @@ class ParticleFilter(InferenceModule):
         Counter object)
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+
+        #empty belief distribution
+        newParticles = util.Counter()
+
+        #for all known particles, add it to the belief distribution
+        for particle in self.particles:
+            newParticles[particle] += 1
+
+        return newParticles
 
 class MarginalInference(InferenceModule):
     """
