@@ -134,13 +134,12 @@ def inferenceByVariableEliminationWithCallTracking(callTrackingList=None):
 
         # get the factors in the evidence variables
         currentFactorsList = bayesNet.getAllCPTsWithEvidence(evidenceDict)
-        print currentFactorsList
-        # join all factors by variable in the elimination order
+
+        # join all factors by elimination variable in the elimination order
         for elimVar in eliminationOrder:
-            if elimVar not in currentFactorsList:
-                continue
             currentFactorsList, joinedFactor = joinFactorsByVariable(currentFactorsList, elimVar)
-            # if there is more than one uncontitional variable then we eliminate the elimvariable else we just ignore it
+            # if there is more than one uncontitional variable then we eliminate the elimvariable
+            # else we just ignore it
             if len(joinedFactor.unconditionedVariables()) > 1:
                 eliminatedFactor = eliminate(joinedFactor, elimVar)
                 currentFactorsList.append(eliminatedFactor)
