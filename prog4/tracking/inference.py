@@ -227,28 +227,17 @@ class ExactInference(InferenceModule):
 
         "*** YOUR CODE HERE ***"
         dist = []
-        newPosDist = util.Counter()
-        final = self.beliefs.copy()
+        newBeleif = util.Counter()
+        final = util.Counter()
         poss = list(self.legalPositions)
-        print self.beliefs
 
         for oldPos in poss:
             temp = self.getPositionDistribution(self.setGhostPosition(gameState, oldPos)).copy()
-            dist.append(temp)
+            dist.append(dict(temp))
+            for newPos, prob in temp.items():
+                newBeleif[newPos] += self.beliefs[oldPos] * prob
+                final[newPos] = newBeleif[newPos]
 
-        for pos in dist:
-            for newPos, prob in pos.items():
-                if newPos == gameState.getPacmanPosition():
-                    newPosDist[newPos] = self.beliefs[newPos]
-                else:
-                    newPosDist[newPos] += prob
-
-        # print newPosDist
-        for newPos, prob in newPosDist.items():
-            if newPos != gameState.getPacmanPosition():
-                final[newPos] = self.beliefs[newPos] * newPosDist[newPos]
-
-        # final.normalize()
         self.beliefs = final
         return final
 
