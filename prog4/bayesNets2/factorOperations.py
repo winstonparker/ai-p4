@@ -104,68 +104,20 @@ def joinFactors(factors):
 
     #do not remove above
 
-    def getFactorByUnconditioned(var):
-        ret = []
-        for fac in factors:
-            for unc in fac.unconditionedVariables():
-                if unc in var:
-                    ret.append(fac)
-            # if fac.unconditionedVariables() == var:
-            #     ret.append(fac)
-        return ret
-
     un_var = set([])
     con_var = set([])
     dom_list = {}
 
-    #go through the list of factors
+    # go through the list of factors and store all of the unconditioned variables,
+    # conditioned variables, along with the variable domains
     for fac in factors:
-        # print fac
-        if len(fac.conditionedVariables()) > 0:
-            #get the factor for that conditioned variable
-            con_fac = getFactorByUnconditioned(fac.conditionedVariables())
-            if len(con_fac) > 0:
-                for tfac in con_fac:
-                    if len(tfac.conditionedVariables()) > 0:
-                        #add fac's unconditionals to newFactor's unconditioned variables
-                        for uncon in fac.unconditionedVariables():
-                            if uncon not in un_var and uncon not in con_var:
-                                un_var.add(uncon)
-                        #go through con_fac's unconditioned variables and if it is in
-                        #fac's conditionals then add it to newFac's unconditionals
-                        for con_fac_uncon in tfac.unconditionedVariables():
-                            if con_fac_uncon in fac.conditionedVariables():
-                                if con_fac_uncon not in un_var and con_fac_uncon not in con_var:
-                                    un_var.add(con_fac_uncon)
-                        #go through fac's conditional variables and add it to newFac's conditionals
-                        for fac_cons in fac.conditionedVariables():
-                            if fac_cons not in con_var and fac_cons not in un_var:
-                                con_var.add(fac_cons)
-                        #go through con_fac's conditional variables and add them to newFac's conditionals
-                        #if it is not in either newFac's unconditionals or conditionals
-                        for con_fac_con in tfac.conditionedVariables():
-                            if con_fac_con not in un_var and con_fac_con not in con_var:
-                                con_var.add(con_fac_con)
-                    else:
-                        for uncon in fac.unconditionedVariables():
-                            if uncon not in un_var and uncon not in con_var:
-                                un_var.add(uncon)
-                        for con_fac_uncon in tfac.unconditionedVariables():
-                            if con_fac_uncon not in un_var and con_fac_uncon not in con_var:
-                                un_var.add(con_fac_uncon)
-            else:
-                #conjoin the two factors
-                for uncon in fac.unconditionedVariables():
-                    if uncon not in un_var and uncon not in con_var:
-                        un_var.add(uncon)
-                for convars in fac.conditionedVariables():
-                    if convars not in con_var and convars not in un_var:
-                        con_var.add(convars)
-        else:
-            for con_fac_uncon in fac.unconditionedVariables():
-                if con_fac_uncon not in un_var and con_fac_uncon not in con_var:
-                    un_var.add(con_fac_uncon)
+        un_var.update(fac.unconditionedVariables())
+        con_var.update(fac.conditionedVariables())
         dom_list.update(fac.variableDomainsDict())
+
+    # remove from the conditioned variables all of the unconditioned variables
+    # because we are able to turn these into into unconditioned varaibles
+    con_var = con_var.difference(un_var)
 
     #build the new factor
     newFac = Factor(un_var, con_var, dom_list)
