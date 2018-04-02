@@ -278,7 +278,8 @@ class ParticleFilter(InferenceModule):
         numParticles = self.numParticles
         pCounter = 0
 
-        #append particles to legal positions until we run out of particles
+        #append legal positions to particles until we
+        #have done so for all particles
         while pCounter < numParticles:
             for position in self.legalPositions:
                 self.particles.append(position)
@@ -316,26 +317,41 @@ class ParticleFilter(InferenceModule):
         pacmanPosition = gameState.getPacmanPosition()
         "*** YOUR CODE HERE ***"
 
-        newBeliefs = util.Counter()
-        beliefs = self.getBeliefDistribution()
+        wParticles = util.Counter()
+        tmpParticles = []
+        numParticles = self.numParticles
+        count = 0
 
-        for pos in self.legalPositions:
-            trueDistance = util.manhattanDistance(pacmanPosition, pos)
-            if emissionModel[trueDistance] > 0:
-                newBeliefs[pos] = emissionModel[trueDistance] * beliefs[pos]
-        newBeliefs.normalize()
+        #when the ghost has been captured by pacman
+        #we want to reset the the particles for the ghost in the prison cell
+        if observation is None:
+            while count < numParticles:
+                tmpParticles.append(self.getJailPosition())
+                count += 1
+            self.particles = tmpParticles
 
-        if newBeliefs.totalCount() == 0:
-            self.initializeUniformly(gameState, self.numParticles)
         else:
-            self.particles = []
-            for i in range (0, self.numParticles):
-                self.particles.append(util.sampleFromCounter(newBeliefs))
+            #set the weight equal to the observation distrubution where
+            #it is equal to the distance from the position of pacman and the individual particle
+            for particle in self.particles:
+                weight = emissionModel[util.manhattanDistance(pacmanPosition, particle)]
+                wParticles[particle] += weight
 
-        if noisyDistance == 999:
-            self.particles = []
-            for i in range (0, self.numParticles):
-                self.particles.append(self.getJailPosition())
+            wParticles.normalize()
+
+            #if the weight of all the particles is zero,
+            #we want to recreate them from the prior distribution
+            if wParticles.totalCount() == 0:
+                self.initializeUniformly(gameState)
+
+            else:
+                #for all the particles, we want to add
+                #a sample from the belief distribution
+                while count < numParticles:
+                    tmpParticles.append(util.sample(wParticles))
+                    count += 1
+                self.particles = tmpParticles
+
 
     def elapseTime(self, gameState):
         """
@@ -370,6 +386,8 @@ class ParticleFilter(InferenceModule):
         for particle in self.particles:
             newParticles[particle] += 1
 
+        #normalize and return
+        newParticles.normalize()
         return newParticles
 
 class MarginalInference(InferenceModule):
